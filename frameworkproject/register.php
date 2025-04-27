@@ -1,5 +1,22 @@
 <?php
   include 'User.php';
+  include_once 'SessionManager.php';
+  include_once 'CookieManager.php';
+  
+  // Initialize session
+  SessionManager::init();
+  
+  // Get current theme from cookie or default to light
+  $current_theme = CookieManager::getTheme('light');
+  
+  // Handle theme toggle if requested
+  if (isset($_GET['theme']) && in_array($_GET['theme'], ['light', 'dark'])) {
+    CookieManager::setTheme($_GET['theme'], 180); // Set theme cookie for 180 days
+    // Redirect to remove the query parameter
+    header("Location: register.php");
+    exit();
+  }
+  
   $errors = [];
   
   if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -37,6 +54,16 @@
     if (empty($errors)) {
       User::createUser($_POST['name'], $_POST['email'], $_POST["password"]);
       if(User::authenticate($_POST["email"], $_POST["password"])) {
+        // Get user ID for session
+        $user = Database::query("SELECT * FROM users WHERE email = ?", [$_POST["email"]], "s");
+        if ($user) {
+          // Set up session for this user
+          SessionManager::setupSession($user['user_id']);
+          // Store registration time in session
+          $_SESSION['registration_time'] = time();
+          $_SESSION['is_new_user'] = true;
+        }
+        
         header("Location: /");
         exit;
       }
@@ -45,28 +72,39 @@
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="<?= htmlspecialchars($current_theme) ?>">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Register</title>
+  <link rel="icon" type="image/png" href="/images/jersey.png">
+  <link rel="stylesheet" href="css/style.css">
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100">
-<nav class="bg-blue-500 text-white p-4">
+<body>
+<nav class="theme-nav text-white p-4">
   <div class="max-w-20xl mx-auto flex justify-between items-center">
     <a href="login.php" class="text-xl font-bold">Shirtaliano</a>
-    <div>
+    <div class="flex gap-4 items-center">
       <a href="/" class="px-4 py-2 hover:bg-blue-700 rounded">Home</a>
       <a href="/card.php" class="px-4 py-2 hover:bg-blue-700 rounded">Card</a>
       <a href="login.php" class="px-4 py-2 hover:bg-blue-700 rounded">Login</a>
       <a href="register.php" class="px-4 py-2 hover:bg-blue-700 rounded">Register</a>
+      <div class="ml-4">
+        <a href="?theme=<?= $current_theme === 'light' ? 'dark' : 'light' ?>" class="inline-flex items-center px-3 py-1 border border-white rounded-full text-xs">
+          <?php if ($current_theme === 'light'): ?>
+              🌙 Dark Mode
+          <?php else: ?>
+              ☀️ Light Mode
+          <?php endif; ?>
+        </a>
+      </div>
     </div>
   </div>
 </nav>
 
 <div class="flex items-center justify-center min-h-screen">
-  <div class="bg-white p-6 rounded-lg shadow-lg w-96">
+  <div class="theme-panel p-6 rounded-lg shadow-lg w-96">
     <h2 class="text-2xl font-bold text-center mb-6">Register</h2>
     <form action="register.php" method="POST">
       <div class="mb-4">
