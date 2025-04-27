@@ -1,0 +1,29 @@
+/* Theme related styles */
+html[data-theme='light'] {
+    --bg-color: #f3f4f6;
+    --text-color: #1f2937;
+    --panel-color: #ffffff;
+    --highlight-color: #3b82f6;
+    --nav-color: #60a5fa;
+}
+
+html[data-theme='dark'] {
+    --bg-color: #1f2937;
+    --text-color: #f3f4f6;
+    --panel-color: #374151;
+    --highlight-color: #60a5fa;
+    --nav-color: #3b82f6;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+}
+
+.theme-panel {
+    background-color: var(--panel-color);
+}
+
+.theme-nav {
+    background-color: var(--nav-color);
+} 
