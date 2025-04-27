@@ -11,9 +11,22 @@ class ShoppingCard {
         SessionManager::init();
         SessionManager::setupSession($user_id);
         
-        // Get product details from database
-        $product_id = Database::query("SELECT product_id FROM products WHERE name = ?", [$product_name], "s")["product_id"];
-        $price = Database::query("SELECT price FROM products WHERE product_id = ?", [$product_id], "i")["price"];
+        // Check if the product exists first
+        $product = Database::query("SELECT product_id, price FROM products WHERE name = ?", [$product_name], "s");
+        
+        if (!$product) {
+            // Attempt to create products if the product doesn't exist
+            Product::createProducts();
+            // Try again
+            $product = Database::query("SELECT product_id, price FROM products WHERE name = ?", [$product_name], "s");
+            
+            if (!$product) {
+                throw new Exception("Product not found: " . $product_name);
+            }
+        }
+        
+        $product_id = $product['product_id'];
+        $price = $product['price'];
         
         // Random quantity between 1 and 4
         $amount = random_int(1, 4);
@@ -23,10 +36,10 @@ class ShoppingCard {
         
         // Also store in database for persistence
         $id = Database::query("INSERT INTO orders(user_id, total_amount, status) VALUES (?, ?, ?)",
-            [$user_id, $price * $amount, 'Pending'], "iis");
+            [$user_id, $price * $amount, 'Pending'], "ids");
         
         Database::query("INSERT INTO order_items(order_id, product_id, quantity, price) VALUES (?,?,?,?)", 
-            [$id, $product_id, $amount, $price], "iiii");
+            [$id, $product_id, $amount, $price], "iiid");
     }
 
     public static function get_card($user_id) {

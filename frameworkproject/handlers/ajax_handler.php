@@ -82,6 +82,17 @@ if (isset($_POST["show_team"])) {
         // Return error response if validation failed
         echo json_encode($response);
     } else {
+        // Check if product exists in database first
+        $product_name = $_POST["team"] . " " . $_POST["kit"];
+        $product = Database::query("SELECT * FROM products WHERE name = ?", [$product_name], "s");
+        
+        if (!$product) {
+            // If product doesn't exist, try to create it
+            Product::createProducts();
+            // Try again
+            $product = Database::query("SELECT * FROM products WHERE name = ?", [$product_name], "s");
+        }
+        
         $file_path = Product::GetProduct($_POST["team"], $_POST["kit"]);
         if ($file_path) {
             // If user is logged in, also store this view in session history
@@ -93,8 +104,6 @@ if (isset($_POST["show_team"])) {
                 if (!isset($_SESSION['recently_viewed'])) {
                     $_SESSION['recently_viewed'] = [];
                 }
-                
-                $product_name = $_POST["team"] . " " . $_POST["kit"];
                 
                 // Add to recently viewed (limit to 10 and prevent duplicates)
                 if (!in_array($product_name, $_SESSION['recently_viewed'])) {

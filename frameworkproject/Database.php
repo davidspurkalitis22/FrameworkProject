@@ -3,22 +3,78 @@
 class Database
 {
     private static $db = null;
-    public function __construct($servername="frameworkProject", $user="root", $pass="", $database="football")
+    
+    public function __construct($servername="localhost", $user="root", $pass="", $database="football")
     {
         if(self::$db != null) return;
-        self::$db = new mysqli($servername, $user, $pass, $database);
-
-        if (self::$db->connect_error) {
-            die("Connection failed: " . self::$db->connect_error);
+        
+        try {
+            // First connect without specifying a database
+            $temp_connection = new mysqli($servername, $user, $pass);
+            
+            // Check for connection error
+            if ($temp_connection->connect_error) {
+                die("Connection failed: " . $temp_connection->connect_error);
+            }
+            
+            // Create the database if it doesn't exist
+            $temp_connection->query("CREATE DATABASE IF NOT EXISTS $database");
+            $temp_connection->close();
+            
+            // Now connect to the database
+            self::$db = new mysqli($servername, $user, $pass, $database);
+            
+            if (self::$db->connect_error) {
+                die("Connection failed: " . self::$db->connect_error);
+            }
+            
+            // Run migrations to create tables if they don't exist
+            if (class_exists('Migrations')) {
+                Migrations::run_migrations(new self());
+            }
+        } catch (Exception $e) {
+            die("Database error: " . $e->getMessage());
         }
     }
 
-    public static function init($servername="frameworkProject", $user="root", $pass="", $database="football") {
-        self::$db = new mysqli($servername, $user, $pass, $database);
-
-        if (self::$db->connect_error) {
-            die("Connection failed: " . self::$db->connect_error);
+    public static function init($servername="localhost", $user="root", $pass="", $database="football") {
+        if(self::$db != null) return;
+        
+        try {
+            // First connect without specifying a database
+            $temp_connection = new mysqli($servername, $user, $pass);
+            
+            // Check for connection error
+            if ($temp_connection->connect_error) {
+                die("Connection failed: " . $temp_connection->connect_error);
+            }
+            
+            // Create the database if it doesn't exist
+            $temp_connection->query("CREATE DATABASE IF NOT EXISTS $database");
+            $temp_connection->close();
+            
+            // Now connect to the database
+            self::$db = new mysqli($servername, $user, $pass, $database);
+            
+            if (self::$db->connect_error) {
+                die("Connection failed: " . self::$db->connect_error);
+            }
+            
+            // Run migrations to create tables if they don't exist
+            if (class_exists('Migrations')) {
+                Migrations::run_migrations(new self());
+            }
+        } catch (Exception $e) {
+            die("Database error: " . $e->getMessage());
         }
+    }
+
+    public static function execute_query($query) {
+        if(self::$db == null) {
+            self::init();
+        }
+        
+        return self::$db->query($query);
     }
 
     public static function query($query, $vars = null, $types = null) {
@@ -29,7 +85,9 @@ class Database
         // prepare statement, we do this so we can add variables via ? instead if in the sql code itself.
         // we do this to prevent sql injection...
         $stmt = self::$db->prepare($query);
-        $stmt->bind_param($types, ...$vars);
+        if ($vars !== null && $types !== null) {
+            $stmt->bind_param($types, ...$vars);
+        }
         $stmt->execute();
         $sql_res = $stmt->get_result();
 
@@ -49,7 +107,9 @@ class Database
         // prepare statement, we do this so we can add variables via ? instead if in the sql code itself.
         // we do this to prevent sql injection...
         $stmt = self::$db->prepare($query);
-        $stmt->bind_param($types, ...$vars);
+        if ($vars !== null && $types !== null) {
+            $stmt->bind_param($types, ...$vars);
+        }
         $stmt->execute();
         $sql_res = $stmt->get_result();
 

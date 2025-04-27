@@ -1,4 +1,13 @@
 <?php
+// Include Database class if it doesn't exist
+if (!class_exists('Database')) {
+    require_once 'Database.php';
+}
+
+// Include Migrations class if it doesn't exist
+if (!class_exists('Migrations')) {
+    require_once 'migrations.php';
+}
 
 class Teams
 {
@@ -14,6 +23,9 @@ class Teams
 
             $products[] =  $file;
         }
+
+        // Ensure the database exists and migrations have run
+        new Database();
 
         foreach($products as $product_img) {
             // get the team name of the file(roma home.png => "roma")

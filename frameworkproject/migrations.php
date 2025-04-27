@@ -1,4 +1,9 @@
 <?php
+// Include Database class if it doesn't exist
+if (!class_exists('Database')) {
+    require_once 'Database.php';
+}
+
 class Migrations {
     static function run_migrations($db) {
         Migrations::_25_02_2025_shopping_tables($db);

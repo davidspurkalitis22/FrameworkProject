@@ -4,6 +4,8 @@
     include "Product.php";
     include "ShoppingCard.php";
     include_once "CookieManager.php";
+    include_once "Database.php";
+    include_once "migrations.php";
     
     // Initialize session
     SessionManager::init();
@@ -16,7 +18,10 @@
     // Get current theme from cookie or default to light
     $current_theme = CookieManager::getTheme('light');
     
+    // Initialize database and create necessary data
+    new Database();
     Teams::createTeams();
+    Product::createProducts();
 
     if(!isset($_COOKIE["login"]) || !User::loggedIn($_COOKIE["login"])) {
         header("Location: /login.php");

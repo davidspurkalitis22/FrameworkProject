@@ -73,14 +73,16 @@ class SessionManager {
         self::init();
         
         $total = 0;
-        if (isset($_SESSION['cart'])) {
+        if (isset($_SESSION['cart']) && !empty($_SESSION['cart'])) {
             foreach ($_SESSION['cart'] as $item) {
-                $total += $item['total'];
+                if (isset($item['total']) && is_numeric($item['total'])) {
+                    $total += $item['total'];
+                }
             }
         }
         
         $_SESSION['payment']['total'] = $total;
-        return $total;
+        return $total; // Will always return 0 or a positive number
     }
     
     // Save payment info

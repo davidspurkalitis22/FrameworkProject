@@ -264,7 +264,7 @@
     </form>
 
     <div class="mt-8">
-        <p class="text-lg font-bold">Total: $<?= number_format(SessionManager::calculateCartTotal(), 2) ?></p>
+        <p class="text-lg font-bold">Total: $<?= number_format(SessionManager::calculateCartTotal() ?: 0, 2) ?></p>
     </div>
     <div class="mt-8">
         <a href="index.php" class="bg-blue-400 text-white p-3 rounded mt-4 hover:bg-blue-500">Continue Shopping</a>
